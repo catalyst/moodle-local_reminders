@@ -16,6 +16,11 @@
 
 namespace local_reminders;
 
+use cm_info;
+use completion_info;
+use core_component;
+use local_reminders\interfaces\status_provider;
+
 /**
  * Helper class to determine the status of activities for users in a course.
  *
@@ -36,48 +41,8 @@ class status {
     /** General completed fail status. */
     public const STATUS_COMPLETED_FAIL = 1 << 4;
 
-    /** Separator for making unique ids. */
-    private const SEPARATOR = '#';
-
-    /** @var int The course id. */
-    private $courseid;
-    /** @var array Submitted assignments and quizzes. */
-    private $submitted = [];
-    /** @var array Activity completion states. */
-    private $completion = [];
-
-    /**
-     * Initialise the status object to retrieve activity completion status for users in the course.
-     *
-     * @param int $courseid The course id.
-     */
-    public function __construct(int $courseid) {
-        $this->courseid = $courseid;
-        $this->init_submitted();
-        $this->init_completion();
-    }
-
-    /**
-     * Check if the user has submitted the assignment or quiz.
-     *
-     * @param int $userid The user id.
-     * @param int $cmid The course module id.
-     * @return bool True if the user has made a submission, false otherwise.
-     */
-    public function is_submitted(int $userid, int $cmid): bool {
-        return isset($this->submitted[$userid . self::SEPARATOR . $cmid]);
-    }
-
-    /**
-     * Get the completion state of the user for the activity.
-     *
-     * @param int $userid The user id.
-     * @param int $cmid The course module id.
-     * @return int The completion state of the user for the activity.
-     */
-    public function get_completion(int $userid, int $cmid): int {
-        return $this->completion[$userid . self::SEPARATOR . $cmid] ?? COMPLETION_INCOMPLETE;
-    }
+    /** @var array A cache of instantiated status_providers. */
+    private static $status_providers = [];
 
     /**
      * Get the activity status of the user.
@@ -86,17 +51,22 @@ class status {
      * @param int $cmid The course module id.
      * @return int The status of the user for the activity.
      */
-    public function get_status(int $userid, int $cmid): int {
+    public static function get_status(int $userid, cm_info $cm): int {
+        global $DB;
+
+        // $cm = get_coursemodule_from_id(null, $cmid, 0, false, MUST_EXIST);
+
         // Default status is not submitted.
         $status = self::STATUS_NOT_SUBMITTED;
 
-        // Check if the user has submitted the assignment.
-        if ($this->is_submitted($userid, $cmid)) {
+        // Check if the user has submitted the activity, if the module type is supported.
+        if (self::is_submitted($userid, $cm)) {
             $status = self::STATUS_SUBMITTED;
         }
 
         // Standard completion status has priority over submitted status.
-        switch ($this->get_completion($userid, $cmid)) {
+        $completionstate = self::get_completion($userid, $cm);
+        switch ($completionstate) {
             case COMPLETION_COMPLETE:
                 $status = self::STATUS_COMPLETED;
                 break;
@@ -111,62 +81,62 @@ class status {
         return $status;
     }
 
-    /**
-     * Initialise the submitted member variable.
-     */
-    private function init_submitted(): void {
-        global $DB;
-
-        // Find all submitted assignments in the course.
-        $assignconcat = $DB->sql_concat('s.userid', "'" . self::SEPARATOR . "'", 'cm.id');
-        $assignsql = "SELECT DISTINCT {$assignconcat} AS uniqueid
-                        FROM {assign_submission} s
-                        JOIN {course_modules} cm ON cm.instance = s.assignment
-                        JOIN {modules} m ON m.id = cm.module
-                       WHERE cm.course = :assigncourseid
-                             AND m.name = 'assign'
-                             AND s.status = 'submitted'";
-
-        // Find all finished or abandoned quiz attempts in the course.
-        $quizconcat = $DB->sql_concat('qa.userid', "'" . self::SEPARATOR . "'", 'cm.id');
-        $quizsql = "SELECT DISTINCT {$quizconcat} AS uniqueid
-                      FROM {quiz_attempts} qa
-                      JOIN {course_modules} cm ON cm.instance = qa.quiz
-                      JOIN {modules} m ON m.id = cm.module
-                     WHERE cm.course = :quizcourseid
-                           AND m.name = 'quiz'
-                           AND qa.state IN ('finished', 'abandoned')";
-
-        // Combine the results into one query.
-        $sql = "SELECT uniqueid FROM (({$assignsql}) UNION ALL ({$quizsql})) AS allsubmissions";
-        $params = [
-            'assigncourseid' => $this->courseid,
-            'quizcourseid' => $this->courseid,
-        ];
-
-        $records = $DB->get_records_sql($sql, $params);
-        foreach ($records as $record) {
-            $this->submitted[$record->uniqueid] = true;
+    private static function is_submitted(int $userid, cm_info $cm): bool {
+        $status_provider = self::get_status_provider($cm->modname);
+        if ($status_provider) {
+            return $status_provider->is_submitted($userid, $cm);
         }
+        return false;
     }
 
     /**
-     * Initialise the completion state member variable.
+     * Get the completion state of the user for the activity.
+     *
+     * @param int $userid The user id.
+     * @param int $cmid The course module id.
+     * @return int The completion state of the user for the activity.
      */
-    private function init_completion(): void {
-        global $DB;
+    private static function get_completion(int $userid, cm_info $cm): int {
+        $completion = new completion_info($cm->get_course());
 
-        // Find all completion states for all users and activities in the course.
-        $concat = $DB->sql_concat('c.userid', "'" . self::SEPARATOR . "'", 'cm.id');
-        $sql = "SELECT {$concat} AS uniqueid,
-                       c.completionstate
-                  FROM {course_modules_completion} c
-                  JOIN {course_modules} cm ON c.coursemoduleid = cm.id
-                 WHERE cm.course = :courseid";
-
-        $records = $DB->get_records_sql($sql, ['courseid' => $this->courseid]);
-        foreach ($records as $record) {
-            $this->completion[$record->uniqueid] = (int) $record->completionstate;
+        if ($completion->is_enabled($cm)) {
+            return (int) $completion->get_data($cm, false, $userid)->completionstate;
         }
+
+        return COMPLETION_INCOMPLETE;
+    }
+
+    /**
+     * Get a submission status status_provider for a given module name.
+     *
+     * @param string $modname The name of the module (e.g. 'assign', 'quiz').
+     * @return status_provider|null A status_provider instance, or null if not supported.
+     */
+    private static function get_status_provider(string $modname): ?status_provider {
+
+        if (isset(self::$status_providers[$modname])) {
+            return self::$status_providers[$modname];
+        }
+
+        // Check if this is a valid, installed Moodle plugin component.
+        if (empty(core_component::get_component_directory("mod_{$modname}"))) {
+            self::$status_providers[$modname] = null;
+            return null;
+        }
+
+        $classname = __NAMESPACE__ . "\\status\\mod_{$modname}";
+        if (!class_exists($classname)) {
+            self::$status_providers[$modname] = null;
+            return null;
+        }
+
+        $status_provider = new $classname();
+        if (!$status_provider instanceof status_provider) {
+            self::$status_providers[$modname] = null;
+            return null;
+        }
+
+        self::$status_providers[$modname] = $status_provider;
+        return $status_provider;
     }
 }

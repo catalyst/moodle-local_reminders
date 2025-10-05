@@ -1,0 +1,54 @@
+<?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
+namespace local_reminders\status;
+
+use assign;
+use cm_info;
+use local_reminders\interfaces\status_provider;
+
+/**
+ * Submission status provider for assignments.
+ *
+ * @package     local_reminders
+ * @author      Alexander Van der Bellen <alexandervanderbellen@catalyst-au.net>
+ * @copyright   2025 Catalyst IT Australia Pty Ltd
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class mod_assign implements status_provider {
+    /**
+     * {@inheritDoc}
+     */
+    public function is_submitted(int $userid, cm_info $cm): bool {
+        global $CFG, $DB;
+
+        require_once($CFG->dirroot . '/mod/assign/locallib.php');
+
+        $assignment = new assign($cm->context, $cm, $cm->get_course());
+        $instance = $assignment->get_instance($userid);
+        if ($instance->requireallteammemberssubmit) {
+            $submission = $assignment->get_group_submission($userid, 0, false);
+            return !empty($submission) && $submission->status === ASSIGN_SUBMISSION_STATUS_SUBMITTED;
+        }
+
+        $conditions = [
+            'userid' => $userid,
+            'assignment' => $cm->instance,
+            'status' => ASSIGN_SUBMISSION_STATUS_SUBMITTED,
+        ];
+        return $DB->count_records('assign_submission', $conditions) > 0;
+    }
+}
