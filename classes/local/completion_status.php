@@ -88,11 +88,11 @@ class completion_status {
      * @return bool True if the user has made a submission or completed the activity, false otherwise.
      */
     public static function is_completed(int $userid, cm_info $cm): bool {
-        switch (completion_status::get_status($userid, $cm)) {
-            case completion_status::STATUS_SUBMITTED:
-            case completion_status::STATUS_COMPLETED:
-            case completion_status::STATUS_COMPLETED_PASS:
-            case completion_status::STATUS_COMPLETED_FAIL:
+        switch (self::get_status($userid, $cm)) {
+            case self::STATUS_SUBMITTED:
+            case self::STATUS_COMPLETED:
+            case self::STATUS_COMPLETED_PASS:
+            case self::STATUS_COMPLETED_FAIL:
                 return true;
             default:
                 return false;
