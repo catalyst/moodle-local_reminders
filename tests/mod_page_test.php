@@ -32,13 +32,13 @@ use completion_info;
  * @copyright   2025 Catalyst IT Australia Pty Ltd
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class mod_page_test extends advanced_testcase {
+final class mod_page_test extends advanced_testcase {
     /**
      * Test return values of get_status.
      *
      * @covers ::get_status
      */
-    public function test_get_status() {
+    public function test_get_status(): void {
         global $DB;
 
         $this->resetAfterTest();

@@ -43,7 +43,7 @@ final class mod_assign_test extends advanced_testcase {
      *
      * @covers ::get_status
      */
-    public function test_get_status() {
+    public function test_get_status(): void {
         global $CFG, $DB;
 
         $this->resetAfterTest();

@@ -41,8 +41,8 @@ class status {
     /** General completed fail status. */
     public const STATUS_COMPLETED_FAIL = 1 << 4;
 
-    /** @var array A cache of instantiated status_providers. */
-    private static $status_providers = [];
+    /** @var array A cache of instantiated status providers. */
+    private static $statusproviders = [];
 
     /**
      * Get the activity status of the user.
@@ -53,8 +53,6 @@ class status {
      */
     public static function get_status(int $userid, cm_info $cm): int {
         global $DB;
-
-        // $cm = get_coursemodule_from_id(null, $cmid, 0, false, MUST_EXIST);
 
         // Default status is not submitted.
         $status = self::STATUS_NOT_SUBMITTED;
@@ -81,10 +79,17 @@ class status {
         return $status;
     }
 
+    /**
+     * Check if the user has made a submission for the activity.
+     *
+     * @param int $userid The user id.
+     * @param cm_info $cm The course module info.
+     * @return bool True if the user has submitted the activity, false otherwise.
+     */
     private static function is_submitted(int $userid, cm_info $cm): bool {
-        $status_provider = self::get_status_provider($cm->modname);
-        if ($status_provider) {
-            return $status_provider->is_submitted($userid, $cm);
+        $statusprovider = self::get_status_provider($cm->modname);
+        if ($statusprovider) {
+            return $statusprovider->is_submitted($userid, $cm);
         }
         return false;
     }
@@ -114,29 +119,29 @@ class status {
      */
     private static function get_status_provider(string $modname): ?status_provider {
 
-        if (isset(self::$status_providers[$modname])) {
-            return self::$status_providers[$modname];
+        if (isset(self::$statusproviders[$modname])) {
+            return self::$statusproviders[$modname];
         }
 
         // Check if this is a valid, installed Moodle plugin component.
         if (empty(core_component::get_component_directory("mod_{$modname}"))) {
-            self::$status_providers[$modname] = null;
+            self::$statusproviders[$modname] = null;
             return null;
         }
 
         $classname = __NAMESPACE__ . "\\status\\mod_{$modname}";
         if (!class_exists($classname)) {
-            self::$status_providers[$modname] = null;
+            self::$statusproviders[$modname] = null;
             return null;
         }
 
-        $status_provider = new $classname();
-        if (!$status_provider instanceof status_provider) {
-            self::$status_providers[$modname] = null;
+        $statusprovider = new $classname();
+        if (!$statusprovider instanceof status_provider) {
+            self::$statusproviders[$modname] = null;
             return null;
         }
 
-        self::$status_providers[$modname] = $status_provider;
-        return $status_provider;
+        self::$statusproviders[$modname] = $statusprovider;
+        return $statusprovider;
     }
 }

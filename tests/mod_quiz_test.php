@@ -19,9 +19,6 @@ namespace local_reminders;
 use completion_info;
 use mod_quiz\quiz_settings;
 use mod_quiz\quiz_attempt;
-
-defined('MOODLE_INTERNAL') || die();
-
 use advanced_testcase;
 use question_engine;
 
