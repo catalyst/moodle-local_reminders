@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace local_reminders;
+namespace local_reminders\local;
 
 use completion_info;
 use advanced_testcase;
@@ -106,7 +106,7 @@ final class mod_quiz_test extends advanced_testcase {
         $cm = $modinfo->get_cm($quiz->cmid);
 
         // Check intial status.
-        $this->assertEquals(status::STATUS_NOT_SUBMITTED, status::get_status($student->id, $cm));
+        $this->assertEquals(completion_status::STATUS_NOT_SUBMITTED, completion_status::get_status($student->id, $cm));
 
         // Complete an attempt and check status is submitted.
         $this->do_attempt_quiz([
@@ -115,7 +115,7 @@ final class mod_quiz_test extends advanced_testcase {
             'attemptnumber' => 1,
             'tosubmit' => [1 => ['answer' => '3.14']],
         ]);
-        $this->assertEquals(status::STATUS_SUBMITTED, status::get_status($student->id, $cm));
+        $this->assertEquals(completion_status::STATUS_SUBMITTED, completion_status::get_status($student->id, $cm));
 
         // Update completion criteria and check status is completed.
         $DB->update_record('course_modules', [
@@ -124,6 +124,6 @@ final class mod_quiz_test extends advanced_testcase {
         ]);
         $completion = new completion_info($course);
         $completion->update_state($cm, COMPLETION_UNKNOWN, $student->id);
-        $this->assertEquals(status::STATUS_COMPLETED, status::get_status($student->id, $cm));
+        $this->assertEquals(completion_status::STATUS_COMPLETED, completion_status::get_status($student->id, $cm));
     }
 }

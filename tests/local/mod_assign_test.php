@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace local_reminders;
+namespace local_reminders\local;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -74,28 +74,28 @@ final class mod_assign_test extends advanced_testcase {
         $student2 = $this->getDataGenerator()->create_and_enrol($course);
 
         // Check the initial status of assignments.
-        $this->assertEquals(status::STATUS_NOT_SUBMITTED, status::get_status($student1->id, $assign1->get_course_module()));
-        $this->assertEquals(status::STATUS_NOT_SUBMITTED, status::get_status($student1->id, $assign2->get_course_module()));
-        $this->assertEquals(status::STATUS_NOT_SUBMITTED, status::get_status($student2->id, $assign1->get_course_module()));
-        $this->assertEquals(status::STATUS_NOT_SUBMITTED, status::get_status($student2->id, $assign2->get_course_module()));
+        $this->assertEquals(completion_status::STATUS_NOT_SUBMITTED, completion_status::get_status($student1->id, $assign1->get_course_module()));
+        $this->assertEquals(completion_status::STATUS_NOT_SUBMITTED, completion_status::get_status($student1->id, $assign2->get_course_module()));
+        $this->assertEquals(completion_status::STATUS_NOT_SUBMITTED, completion_status::get_status($student2->id, $assign1->get_course_module()));
+        $this->assertEquals(completion_status::STATUS_NOT_SUBMITTED, completion_status::get_status($student2->id, $assign2->get_course_module()));
 
         // Add a draft submission for student 1.
         $this->add_submission($student1, $assign1, 'Assignment submission text alpha.');
         $this->add_submission($student1, $assign2, 'Graded assignment submission text alpha.');
 
-        $this->assertEquals(status::STATUS_NOT_SUBMITTED, status::get_status($student1->id, $assign1->get_course_module()));
-        $this->assertEquals(status::STATUS_NOT_SUBMITTED, status::get_status($student1->id, $assign2->get_course_module()));
-        $this->assertEquals(status::STATUS_NOT_SUBMITTED, status::get_status($student2->id, $assign1->get_course_module()));
-        $this->assertEquals(status::STATUS_NOT_SUBMITTED, status::get_status($student2->id, $assign2->get_course_module()));
+        $this->assertEquals(completion_status::STATUS_NOT_SUBMITTED, completion_status::get_status($student1->id, $assign1->get_course_module()));
+        $this->assertEquals(completion_status::STATUS_NOT_SUBMITTED, completion_status::get_status($student1->id, $assign2->get_course_module()));
+        $this->assertEquals(completion_status::STATUS_NOT_SUBMITTED, completion_status::get_status($student2->id, $assign1->get_course_module()));
+        $this->assertEquals(completion_status::STATUS_NOT_SUBMITTED, completion_status::get_status($student2->id, $assign2->get_course_module()));
 
         // Submit assignment for student 1.
         $this->submit_for_grading($student1, $assign1);
         $this->submit_for_grading($student1, $assign2);
 
-        $this->assertEquals(status::STATUS_SUBMITTED, status::get_status($student1->id, $assign1->get_course_module()));
-        $this->assertEquals(status::STATUS_SUBMITTED, status::get_status($student1->id, $assign2->get_course_module()));
-        $this->assertEquals(status::STATUS_NOT_SUBMITTED, status::get_status($student2->id, $assign1->get_course_module()));
-        $this->assertEquals(status::STATUS_NOT_SUBMITTED, status::get_status($student2->id, $assign2->get_course_module()));
+        $this->assertEquals(completion_status::STATUS_SUBMITTED, completion_status::get_status($student1->id, $assign1->get_course_module()));
+        $this->assertEquals(completion_status::STATUS_SUBMITTED, completion_status::get_status($student1->id, $assign2->get_course_module()));
+        $this->assertEquals(completion_status::STATUS_NOT_SUBMITTED, completion_status::get_status($student2->id, $assign1->get_course_module()));
+        $this->assertEquals(completion_status::STATUS_NOT_SUBMITTED, completion_status::get_status($student2->id, $assign2->get_course_module()));
 
         // Resubmit assignments for student 1 before grading.
         $this->add_submission($student1, $assign1, 'Assignment submission text beta.');
@@ -104,18 +104,18 @@ final class mod_assign_test extends advanced_testcase {
         $this->submit_for_grading($student1, $assign2);
 
         // Since the assignment has not been graded yet, the status should still be submitted.
-        $this->assertEquals(status::STATUS_SUBMITTED, status::get_status($student1->id, $assign1->get_course_module()));
-        $this->assertEquals(status::STATUS_SUBMITTED, status::get_status($student1->id, $assign2->get_course_module()));
-        $this->assertEquals(status::STATUS_NOT_SUBMITTED, status::get_status($student2->id, $assign1->get_course_module()));
-        $this->assertEquals(status::STATUS_NOT_SUBMITTED, status::get_status($student2->id, $assign2->get_course_module()));
+        $this->assertEquals(completion_status::STATUS_SUBMITTED, completion_status::get_status($student1->id, $assign1->get_course_module()));
+        $this->assertEquals(completion_status::STATUS_SUBMITTED, completion_status::get_status($student1->id, $assign2->get_course_module()));
+        $this->assertEquals(completion_status::STATUS_NOT_SUBMITTED, completion_status::get_status($student2->id, $assign1->get_course_module()));
+        $this->assertEquals(completion_status::STATUS_NOT_SUBMITTED, completion_status::get_status($student2->id, $assign2->get_course_module()));
 
         // Grade the assignments for student 1.
         $this->mark_submission($teacher, $assign1, $student1, 25.0);
         $this->mark_submission($teacher, $assign2, $student1, 25.0);
 
-        $this->assertEquals(status::STATUS_COMPLETED, status::get_status($student1->id, $assign1->get_course_module()));
-        $this->assertEquals(status::STATUS_COMPLETED_FAIL, status::get_status($student1->id, $assign2->get_course_module()));
-        $this->assertEquals(status::STATUS_NOT_SUBMITTED, status::get_status($student2->id, $assign1->get_course_module()));
-        $this->assertEquals(status::STATUS_NOT_SUBMITTED, status::get_status($student2->id, $assign2->get_course_module()));
+        $this->assertEquals(completion_status::STATUS_COMPLETED, completion_status::get_status($student1->id, $assign1->get_course_module()));
+        $this->assertEquals(completion_status::STATUS_COMPLETED_FAIL, completion_status::get_status($student1->id, $assign2->get_course_module()));
+        $this->assertEquals(completion_status::STATUS_NOT_SUBMITTED, completion_status::get_status($student2->id, $assign1->get_course_module()));
+        $this->assertEquals(completion_status::STATUS_NOT_SUBMITTED, completion_status::get_status($student2->id, $assign2->get_course_module()));
     }
 }

@@ -14,20 +14,21 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace local_reminders\status;
+namespace local_reminders\local\status_provider;
 
+use assign;
 use cm_info;
-use local_reminders\interfaces\status_provider;
+use local_reminders\local\status_provider;
 
 /**
- * Submission status provider for quizzes.
+ * Submission status provider for assignments.
  *
  * @package     local_reminders
  * @author      Alexander Van der Bellen <alexandervanderbellen@catalyst-au.net>
  * @copyright   2025 Catalyst IT Australia Pty Ltd
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class mod_quiz implements status_provider {
+class mod_assign implements status_provider {
     /**
      * {@inheritDoc}
      *
@@ -36,10 +37,22 @@ class mod_quiz implements status_provider {
      * @return bool True if the user has made a submission, false otherwise.
      */
     public function is_submitted(int $userid, cm_info $cm): bool {
-        global $CFG;
+        global $CFG, $DB;
 
-        require_once($CFG->dirroot . '/mod/quiz/locallib.php');
+        require_once($CFG->dirroot . '/mod/assign/locallib.php');
 
-        return !empty(quiz_get_user_attempts($cm->instance, $userid));
+        $assignment = new assign($cm->context, $cm, $cm->get_course());
+        $instance = $assignment->get_instance($userid);
+        if ($instance->requireallteammemberssubmit) {
+            $submission = $assignment->get_group_submission($userid, 0, false);
+            return !empty($submission) && $submission->status === ASSIGN_SUBMISSION_STATUS_SUBMITTED;
+        }
+
+        $conditions = [
+            'userid' => $userid,
+            'assignment' => $cm->instance,
+            'status' => ASSIGN_SUBMISSION_STATUS_SUBMITTED,
+        ];
+        return $DB->count_records('assign_submission', $conditions) > 0;
     }
 }

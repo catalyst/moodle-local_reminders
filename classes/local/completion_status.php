@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace local_reminders;
+namespace local_reminders\local;
 
 use cm_info;
 use completion_info;
 use core_component;
-use local_reminders\interfaces\status_provider;
+use local_reminders\local\status_provider;
 
 /**
  * Helper class to determine the status of activities for users in a course.
@@ -29,7 +29,7 @@ use local_reminders\interfaces\status_provider;
  * @copyright   2025 Catalyst IT Australia Pty Ltd
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class status {
+class completion_status {
     /** General not submitted status. */
     public const STATUS_NOT_SUBMITTED = 1 << 0;
     /** Submitted status for assignments and quizzes. */
@@ -77,6 +77,26 @@ class status {
         }
 
         return $status;
+    }
+
+    /**
+     * Check if the user has made a submission or has fulfilled the completion criteria for the activity.
+     * Submission status is only checked for supported activity types.
+     *
+     * @param int $userid The user id.
+     * @param cm_info $cm The course module object.
+     * @return bool True if the user has made a submission or completed the activity, false otherwise.
+     */
+    public static function is_completed(int $userid, cm_info $cm): bool {
+        switch (completion_status::get_status($userid, $cm)) {
+            case completion_status::STATUS_SUBMITTED:
+            case completion_status::STATUS_COMPLETED:
+            case completion_status::STATUS_COMPLETED_PASS:
+            case completion_status::STATUS_COMPLETED_FAIL:
+                return true;
+            default:
+                return false;
+        }
     }
 
     /**
@@ -129,7 +149,7 @@ class status {
             return null;
         }
 
-        $classname = __NAMESPACE__ . "\\status\\mod_{$modname}";
+        $classname = __NAMESPACE__ . "\\status_provider\\mod_{$modname}";
         if (!class_exists($classname)) {
             self::$statusproviders[$modname] = null;
             return null;

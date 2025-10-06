@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace local_reminders;
+namespace local_reminders\local;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -62,7 +62,7 @@ final class mod_page_test extends advanced_testcase {
         $completion->set_module_viewed($cm, $student2->id);
 
         // Check if the page activity is marked as completed for the student.
-        $this->assertEquals(status::get_status($student1->id, $cm), status::STATUS_NOT_SUBMITTED);
-        $this->assertEquals(status::get_status($student2->id, $cm), status::STATUS_COMPLETED);
+        $this->assertEquals(completion_status::get_status($student1->id, $cm), completion_status::STATUS_NOT_SUBMITTED);
+        $this->assertEquals(completion_status::get_status($student2->id, $cm), completion_status::STATUS_COMPLETED);
     }
 }
