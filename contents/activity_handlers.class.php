@@ -106,8 +106,7 @@ abstract class local_reminder_activity_handler {
      * @return bool true if completed. false otherwise.
      */
     protected function check_completion_status($course, $coursemodule, $userid) {
-        $status = new status($course->id);
-        return match ($status->get_status($userid, $coursemodule->id)) {
+        return match (status::get_status($userid, $coursemodule)) {
             status::STATUS_SUBMITTED => true,
             status::STATUS_COMPLETED => true,
             status::STATUS_COMPLETED_PASS => true,
