@@ -48,7 +48,7 @@ class status {
      * Get the activity status of the user.
      *
      * @param int $userid The user id.
-     * @param int $cmid The course module id.
+     * @param cm_info $cm The course module object.
      * @return int The status of the user for the activity.
      */
     public static function get_status(int $userid, cm_info $cm): int {
@@ -98,7 +98,7 @@ class status {
      * Get the completion state of the user for the activity.
      *
      * @param int $userid The user id.
-     * @param int $cmid The course module id.
+     * @param cm_info $cm The course module object.
      * @return int The completion state of the user for the activity.
      */
     private static function get_completion(int $userid, cm_info $cm): int {

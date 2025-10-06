@@ -31,6 +31,10 @@ use local_reminders\interfaces\status_provider;
 class mod_assign implements status_provider {
     /**
      * {@inheritDoc}
+     *
+     * @param int $userid The user id.
+     * @param cm_info $cm The course module object.
+     * @return bool True if the user has made a submission, false otherwise.
      */
     public function is_submitted(int $userid, cm_info $cm): bool {
         global $CFG, $DB;
