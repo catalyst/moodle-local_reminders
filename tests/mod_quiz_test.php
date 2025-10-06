@@ -17,8 +17,6 @@
 namespace local_reminders;
 
 use completion_info;
-use mod_quiz\quiz_settings;
-use mod_quiz\quiz_attempt;
 use advanced_testcase;
 use question_engine;
 
@@ -64,7 +62,7 @@ final class mod_quiz_test extends advanced_testcase {
      * @param array $attemptoptions ['quiz'] => object, ['student'] => object, ['tosubmit'] => array, ['attemptnumber'] => int
      */
     private function do_attempt_quiz(array $attemptoptions): void {
-        $quizobj = quiz_settings::create((int) $attemptoptions['quiz']->id);
+        $quizobj = \mod_quiz\quiz_settings::create((int) $attemptoptions['quiz']->id);
 
         // Start the passing attempt.
         $quba = question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
@@ -77,11 +75,11 @@ final class mod_quiz_test extends advanced_testcase {
         quiz_attempt_save_started($quizobj, $quba, $attempt);
 
         // Process responses from the student.
-        $attemptobj = quiz_attempt::create($attempt->id);
+        $attemptobj = \mod_quiz\quiz_attempt::create($attempt->id);
         $attemptobj->process_submitted_actions($timenow, false, $attemptoptions['tosubmit']);
 
         // Finish the attempt.
-        $attemptobj = quiz_attempt::create($attempt->id);
+        $attemptobj = \mod_quiz\quiz_attempt::create($attempt->id);
         $this->assertTrue($attemptobj->has_response_to_at_least_one_graded_question());
         $attemptobj->process_finish($timenow, false);
     }
@@ -93,6 +91,10 @@ final class mod_quiz_test extends advanced_testcase {
      */
     public function test_get_status(): void {
         global $CFG, $DB;
+
+        if (!class_exists('\mod_quiz\quiz_settings') || !class_exists('\mod_quiz\quiz_attempt')) {
+            $this->markTestSkipped('mod_quiz API is not available.');
+        }
 
         $this->resetAfterTest(true);
         $CFG->enablecompletion = true;
