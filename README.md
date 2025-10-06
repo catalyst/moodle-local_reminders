@@ -1,4 +1,4 @@
-# Moodle - Local Reminders
+# Moodle - Local Reminders - TEST PR
 ---
 ![Version](https://img.shields.io/badge/version-v2.7.4-blue)
 ![Moodle Version](https://img.shields.io/badge/moodle-%3E%3D%203.5-orange)
