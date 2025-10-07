@@ -17,6 +17,7 @@
 namespace local_reminders\local;
 
 use cm_info;
+use completion_info;
 
 /**
  * Interface for activity submission status providers.
@@ -26,13 +27,30 @@ use cm_info;
  * @copyright   2025 Catalyst IT Australia Pty Ltd
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-interface status_provider {
+abstract class status_provider {
     /**
-     * Check if the user has made a submission.
+     * Check if the activity is considered complete.
      *
      * @param int $userid The user id.
      * @param cm_info $cm The course module object.
      * @return bool True if the user has made a submission, false otherwise.
      */
-    public function is_submitted(int $userid, cm_info $cm): bool;
+    abstract public function is_completed(int $userid, cm_info $cm): bool;
+
+    /**
+     * Get the completion state of the user for the activity.
+     *
+     * @param int $userid The user id.
+     * @param cm_info $cm The course module object.
+     * @return int The completion state of the user for the activity.
+     */
+    public static function get_completion_state(int $userid, cm_info $cm): int {
+        $completion = new completion_info($cm->get_course());
+
+        if ($completion->is_enabled($cm)) {
+            return (int) $completion->get_data($cm, false, $userid)->completionstate;
+        }
+
+        return COMPLETION_INCOMPLETE;
+    }
 }

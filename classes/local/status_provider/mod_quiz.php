@@ -27,7 +27,7 @@ use local_reminders\local\status_provider;
  * @copyright   2025 Catalyst IT Australia Pty Ltd
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class mod_quiz implements status_provider {
+class mod_quiz extends status_provider {
     /**
      * {@inheritDoc}
      *
@@ -35,11 +35,22 @@ class mod_quiz implements status_provider {
      * @param cm_info $cm The course module object.
      * @return bool True if the user has made a submission, false otherwise.
      */
-    public function is_submitted(int $userid, cm_info $cm): bool {
+    public function is_completed(int $userid, cm_info $cm): bool {
         global $CFG;
 
         require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 
-        return !empty(quiz_get_user_attempts($cm->instance, $userid));
+        if (count(quiz_get_user_attempts($cm->instance, $userid)) > 0) {
+            return true;
+        }
+
+        switch (self::get_completion_state($userid, $cm)) {
+            case COMPLETION_COMPLETE:
+            case COMPLETION_COMPLETE_PASS:
+            case COMPLETION_COMPLETE_FAIL:
+                return true;
+            default:
+                return false;
+        }
     }
 }

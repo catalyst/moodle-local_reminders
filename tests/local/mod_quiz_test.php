@@ -87,7 +87,7 @@ final class mod_quiz_test extends advanced_testcase {
     /**
      * Test return values of get_status.
      *
-     * @covers ::get_status
+     * @covers ::is_completed
      */
     public function test_get_status(): void {
         global $CFG, $DB;
@@ -106,7 +106,7 @@ final class mod_quiz_test extends advanced_testcase {
         $cm = $modinfo->get_cm($quiz->cmid);
 
         // Check intial status.
-        $this->assertEquals(completion_status::STATUS_NOT_SUBMITTED, completion_status::get_status($student->id, $cm));
+        $this->assertFalse(completion_status::is_completed($student->id, $cm));
 
         // Complete an attempt and check status is submitted.
         $this->do_attempt_quiz([
@@ -115,7 +115,7 @@ final class mod_quiz_test extends advanced_testcase {
             'attemptnumber' => 1,
             'tosubmit' => [1 => ['answer' => '3.14']],
         ]);
-        $this->assertEquals(completion_status::STATUS_SUBMITTED, completion_status::get_status($student->id, $cm));
+        $this->assertTrue(completion_status::is_completed($student->id, $cm));
 
         // Update completion criteria and check status is completed.
         $DB->update_record('course_modules', [
@@ -124,6 +124,6 @@ final class mod_quiz_test extends advanced_testcase {
         ]);
         $completion = new completion_info($course);
         $completion->update_state($cm, COMPLETION_UNKNOWN, $student->id);
-        $this->assertEquals(completion_status::STATUS_COMPLETED, completion_status::get_status($student->id, $cm));
+        $this->assertTrue(completion_status::is_completed($student->id, $cm));
     }
 }

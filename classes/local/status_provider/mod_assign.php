@@ -28,7 +28,7 @@ use local_reminders\local\status_provider;
  * @copyright   2025 Catalyst IT Australia Pty Ltd
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class mod_assign implements status_provider {
+class mod_assign extends status_provider {
     /**
      * {@inheritDoc}
      *
@@ -36,23 +36,31 @@ class mod_assign implements status_provider {
      * @param cm_info $cm The course module object.
      * @return bool True if the user has made a submission, false otherwise.
      */
-    public function is_submitted(int $userid, cm_info $cm): bool {
+    public function is_completed(int $userid, cm_info $cm): bool {
         global $CFG, $DB;
 
         require_once($CFG->dirroot . '/mod/assign/locallib.php');
 
         $assignment = new assign($cm->context, $cm, $cm->get_course());
         $instance = $assignment->get_instance($userid);
-        if ($instance->requireallteammemberssubmit) {
+
+        if ($instance->teamsubmission) {
             $submission = $assignment->get_group_submission($userid, 0, false);
-            return !empty($submission) && $submission->status === ASSIGN_SUBMISSION_STATUS_SUBMITTED;
+        } else {
+            $submission = $assignment->get_user_submission($userid, false);
         }
 
-        $conditions = [
-            'userid' => $userid,
-            'assignment' => $cm->instance,
-            'status' => ASSIGN_SUBMISSION_STATUS_SUBMITTED,
-        ];
-        return $DB->count_records('assign_submission', $conditions) > 0;
+        if (is_object($submission) && isset($submission->status)) {
+            return $submission->status === ASSIGN_SUBMISSION_STATUS_SUBMITTED;
+        }
+
+        switch (self::get_completion_state($userid, $cm)) {
+            case COMPLETION_COMPLETE:
+            case COMPLETION_COMPLETE_PASS:
+            case COMPLETION_COMPLETE_FAIL:
+                return true;
+            default:
+                return false;
+        }
     }
 }

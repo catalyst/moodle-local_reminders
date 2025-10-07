@@ -17,7 +17,6 @@
 namespace local_reminders\local;
 
 use cm_info;
-use completion_info;
 use core_component;
 use local_reminders\local\status_provider;
 
@@ -30,105 +29,32 @@ use local_reminders\local\status_provider;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class completion_status {
-    /** General not submitted status. */
-    public const STATUS_NOT_SUBMITTED = 1 << 0;
-    /** Submitted status for assignments and quizzes. */
-    public const STATUS_SUBMITTED = 1 << 1;
-    /** General completed status. */
-    public const STATUS_COMPLETED = 1 << 2;
-    /** General completed pass status. */
-    public const STATUS_COMPLETED_PASS = 1 << 3;
-    /** General completed fail status. */
-    public const STATUS_COMPLETED_FAIL = 1 << 4;
-
     /** @var array A cache of instantiated status providers. */
     private static $statusproviders = [];
 
     /**
-     * Get the activity status of the user.
+     * Check if the activity is considered complete for the given user.
      *
      * @param int $userid The user id.
      * @param cm_info $cm The course module object.
-     * @return int The status of the user for the activity.
-     */
-    public static function get_status(int $userid, cm_info $cm): int {
-        global $DB;
-
-        // Default status is not submitted.
-        $status = self::STATUS_NOT_SUBMITTED;
-
-        // Check if the user has submitted the activity, if the module type is supported.
-        if (self::is_submitted($userid, $cm)) {
-            $status = self::STATUS_SUBMITTED;
-        }
-
-        // Standard completion status has priority over submitted status.
-        $completionstate = self::get_completion($userid, $cm);
-        switch ($completionstate) {
-            case COMPLETION_COMPLETE:
-                $status = self::STATUS_COMPLETED;
-                break;
-            case COMPLETION_COMPLETE_PASS:
-                $status = self::STATUS_COMPLETED_PASS;
-                break;
-            case COMPLETION_COMPLETE_FAIL:
-                $status = self::STATUS_COMPLETED_FAIL;
-                break;
-        }
-
-        return $status;
-    }
-
-    /**
-     * Check if the user has made a submission or has fulfilled the completion criteria for the activity.
-     * Submission status is only checked for supported activity types.
-     *
-     * @param int $userid The user id.
-     * @param cm_info $cm The course module object.
-     * @return bool True if the user has made a submission or completed the activity, false otherwise.
+     * @return bool True if the activity is considered complete, false otherwise.
      */
     public static function is_completed(int $userid, cm_info $cm): bool {
-        switch (self::get_status($userid, $cm)) {
-            case self::STATUS_SUBMITTED:
-            case self::STATUS_COMPLETED:
-            case self::STATUS_COMPLETED_PASS:
-            case self::STATUS_COMPLETED_FAIL:
+        // Let supported activity types determine completion status.
+        $statusprovider = self::get_status_provider($cm->modname);
+        if ($statusprovider) {
+            return $statusprovider->is_completed($userid, $cm);
+        }
+
+        // Fallback to checking activity completion status.
+        switch (status_provider::get_completion_state($userid, $cm)) {
+            case COMPLETION_COMPLETE:
+            case COMPLETION_COMPLETE_PASS:
+            case COMPLETION_COMPLETE_FAIL:
                 return true;
             default:
                 return false;
         }
-    }
-
-    /**
-     * Check if the user has made a submission for the activity.
-     *
-     * @param int $userid The user id.
-     * @param cm_info $cm The course module info.
-     * @return bool True if the user has submitted the activity, false otherwise.
-     */
-    private static function is_submitted(int $userid, cm_info $cm): bool {
-        $statusprovider = self::get_status_provider($cm->modname);
-        if ($statusprovider) {
-            return $statusprovider->is_submitted($userid, $cm);
-        }
-        return false;
-    }
-
-    /**
-     * Get the completion state of the user for the activity.
-     *
-     * @param int $userid The user id.
-     * @param cm_info $cm The course module object.
-     * @return int The completion state of the user for the activity.
-     */
-    private static function get_completion(int $userid, cm_info $cm): int {
-        $completion = new completion_info($cm->get_course());
-
-        if ($completion->is_enabled($cm)) {
-            return (int) $completion->get_data($cm, false, $userid)->completionstate;
-        }
-
-        return COMPLETION_INCOMPLETE;
     }
 
     /**

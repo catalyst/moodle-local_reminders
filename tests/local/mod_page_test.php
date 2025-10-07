@@ -36,7 +36,7 @@ final class mod_page_test extends advanced_testcase {
     /**
      * Test return values of get_status.
      *
-     * @covers ::get_status
+     * @covers ::is_completed
      */
     public function test_get_status(): void {
         global $DB;
@@ -62,7 +62,7 @@ final class mod_page_test extends advanced_testcase {
         $completion->set_module_viewed($cm, $student2->id);
 
         // Check if the page activity is marked as completed for the student.
-        $this->assertEquals(completion_status::get_status($student1->id, $cm), completion_status::STATUS_NOT_SUBMITTED);
-        $this->assertEquals(completion_status::get_status($student2->id, $cm), completion_status::STATUS_COMPLETED);
+        $this->assertFalse(completion_status::is_completed($student1->id, $cm));
+        $this->assertTrue(completion_status::is_completed($student2->id, $cm));
     }
 }
