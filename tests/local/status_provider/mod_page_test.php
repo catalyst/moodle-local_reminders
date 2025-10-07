@@ -14,7 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace local_reminders\local;
+namespace local_reminders\local\status_provider;
+
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -23,6 +24,7 @@ require_once($CFG->dirroot . '/mod/assign/tests/generator.php');
 
 use advanced_testcase;
 use completion_info;
+use local_reminders\local\completion_status;
 
 /**
  * Test status class.

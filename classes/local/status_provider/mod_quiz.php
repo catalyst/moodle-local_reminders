@@ -17,7 +17,7 @@
 namespace local_reminders\local\status_provider;
 
 use cm_info;
-use local_reminders\local\status_provider;
+use local_reminders\local\completion_status_provider;
 
 /**
  * Submission status provider for quizzes.
@@ -27,7 +27,7 @@ use local_reminders\local\status_provider;
  * @copyright   2025 Catalyst IT Australia Pty Ltd
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class mod_quiz extends status_provider {
+class mod_quiz extends completion_status_provider {
     /**
      * {@inheritDoc}
      *
@@ -44,13 +44,6 @@ class mod_quiz extends status_provider {
             return true;
         }
 
-        switch (self::get_completion_state($userid, $cm)) {
-            case COMPLETION_COMPLETE:
-            case COMPLETION_COMPLETE_PASS:
-            case COMPLETION_COMPLETE_FAIL:
-                return true;
-            default:
-                return false;
-        }
+        return parent::is_completed($userid, $cm);
     }
 }

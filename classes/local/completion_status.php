@@ -18,7 +18,6 @@ namespace local_reminders\local;
 
 use cm_info;
 use core_component;
-use local_reminders\local\status_provider;
 
 /**
  * Helper class to determine the status of activities for users in a course.
@@ -41,29 +40,22 @@ class completion_status {
      */
     public static function is_completed(int $userid, cm_info $cm): bool {
         // Let supported activity types determine completion status.
-        $statusprovider = self::get_status_provider($cm->modname);
+        $statusprovider = self::get_completion_status_provider($cm->modname);
         if ($statusprovider) {
             return $statusprovider->is_completed($userid, $cm);
         }
 
-        // Fallback to checking activity completion status.
-        switch (status_provider::get_completion_state($userid, $cm)) {
-            case COMPLETION_COMPLETE:
-            case COMPLETION_COMPLETE_PASS:
-            case COMPLETION_COMPLETE_FAIL:
-                return true;
-            default:
-                return false;
-        }
+        $statusprovider = new completion_status_provider();
+        return $statusprovider->is_completed($userid, $cm);
     }
 
     /**
-     * Get a submission status status_provider for a given module name.
+     * Get a submission status completion_status_provider for a given module name.
      *
      * @param string $modname The name of the module (e.g. 'assign', 'quiz').
-     * @return status_provider|null A status_provider instance, or null if not supported.
+     * @return completion_status_provider|null A completion_status_provider instance, or null if not supported.
      */
-    private static function get_status_provider(string $modname): ?status_provider {
+    private static function get_completion_status_provider(string $modname): ?completion_status_provider {
 
         if (isset(self::$statusproviders[$modname])) {
             return self::$statusproviders[$modname];
@@ -82,7 +74,7 @@ class completion_status {
         }
 
         $statusprovider = new $classname();
-        if (!$statusprovider instanceof status_provider) {
+        if (!$statusprovider instanceof completion_status_provider) {
             self::$statusproviders[$modname] = null;
             return null;
         }

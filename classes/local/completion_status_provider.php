@@ -20,14 +20,14 @@ use cm_info;
 use completion_info;
 
 /**
- * Interface for activity submission status providers.
+ * Default class for activity completion status providers.
  *
  * @package     local_reminders
  * @author      Alexander Van der Bellen <alexandervanderbellen@catalyst-au.net>
  * @copyright   2025 Catalyst IT Australia Pty Ltd
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-abstract class status_provider {
+class completion_status_provider {
     /**
      * Check if the activity is considered complete.
      *
@@ -35,22 +35,18 @@ abstract class status_provider {
      * @param cm_info $cm The course module object.
      * @return bool True if the user has made a submission, false otherwise.
      */
-    abstract public function is_completed(int $userid, cm_info $cm): bool;
-
-    /**
-     * Get the completion state of the user for the activity.
-     *
-     * @param int $userid The user id.
-     * @param cm_info $cm The course module object.
-     * @return int The completion state of the user for the activity.
-     */
-    public static function get_completion_state(int $userid, cm_info $cm): int {
+    public function is_completed(int $userid, cm_info $cm): bool {
         $completion = new completion_info($cm->get_course());
 
         if ($completion->is_enabled($cm)) {
-            return (int) $completion->get_data($cm, false, $userid)->completionstate;
+            switch ($completion->get_data($cm, false, $userid)->completionstate) {
+                case COMPLETION_COMPLETE:
+                case COMPLETION_COMPLETE_PASS:
+                case COMPLETION_COMPLETE_FAIL:
+                    return true;
+            }
         }
 
-        return COMPLETION_INCOMPLETE;
+        return false;
     }
 }

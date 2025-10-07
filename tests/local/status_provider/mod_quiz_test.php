@@ -14,10 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace local_reminders\local;
+namespace local_reminders\local\status_provider;
 
 use completion_info;
 use advanced_testcase;
+use local_reminders\local\completion_status;
 use question_engine;
 
 /**
