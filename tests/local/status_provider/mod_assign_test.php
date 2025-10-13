@@ -35,7 +35,6 @@ use mod_assign_test_generator;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class mod_assign_test extends advanced_testcase {
-
     // Include the assign test generator helper trait.
     use mod_assign_test_generator;
 
