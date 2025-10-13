@@ -30,7 +30,6 @@ use question_engine;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class mod_quiz_test extends advanced_testcase {
-
     /**
      * Helper function to set up a quiz with one numerical question.
      *
@@ -70,8 +69,14 @@ final class mod_quiz_test extends advanced_testcase {
         $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
 
         $timenow = time();
-        $attempt = quiz_create_attempt($quizobj, $attemptoptions['attemptnumber'], false, $timenow, false,
-            $attemptoptions['student']->id);
+        $attempt = quiz_create_attempt(
+            $quizobj,
+            $attemptoptions['attemptnumber'],
+            false,
+            $timenow,
+            false,
+            $attemptoptions['student']->id
+        );
         quiz_start_new_attempt($quizobj, $quba, $attempt, $attemptoptions['attemptnumber'], $timenow);
         quiz_attempt_save_started($quizobj, $quba, $attempt);
 
